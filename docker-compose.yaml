@@ -1,0 +1,34 @@
+version: '3.7'
+
+services:
+  app:
+    image: ${APP_IMAGE}
+    container_name: ${APP_CONTAINER_NAME}
+    env_file:
+      - flexmaster/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`app.ghulammuzz.com`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls=true"
+      - "traefik.http.routers.app.tls.certresolver=leresolver"
+      - "traefik.http.services.app.loadbalancer.server.port=${APP_PORT}"
+
+  traefik:
+    image: ${TRAEFIK_IMAGE}
+    container_name: ${TRAEFIK_CONTAINER_NAME}
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.leresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.leresolver.acme.email=${TRAEFIK_EMAIL}"
+      - "--certificatesresolvers.leresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"   
+      - "443:443" 
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./letsencrypt:/letsencrypt"
